@@ -57,8 +57,7 @@ public class MainController {
     }
 
     @RequestMapping("/")
-    public String indexPage() {
-        return "redirect:/index";
+    public String index() {
+        return "index";
     }
-
 }
