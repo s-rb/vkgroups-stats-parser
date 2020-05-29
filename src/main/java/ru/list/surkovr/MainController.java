@@ -26,7 +26,7 @@ public class MainController {
     // Код получаем после авторизации. Если код отсутствует, то редирект на авторизацию
     // После авторизации, код запоминается в приложении и используется для автоматического обновления
     // При каждом запросе данных, код будет обновляться (если он есть в запросе)
-    @GetMapping(path = "/index", params = {"period", "code"})
+    @GetMapping(path = "/index")
     public String getGroupLikes(@RequestParam(value = "period", required = false) String period,
                                 @RequestParam(value = "code", required = true) String code, Model model,
                                 HttpServletResponse response) {
@@ -56,9 +56,9 @@ public class MainController {
         response.sendRedirect(vkGroupService.getUserOAuthUrl());
     }
 
-//    @RequestMapping("/")
-//    public String indexPage() {
-//        return "index";
-//    }
+    @RequestMapping("/")
+    public String indexPage() {
+        return "redirect:/index";
+    }
 
 }
