@@ -20,7 +20,7 @@ spring:
 
 db:
   update:
-    timeout: 3600000
+    timeout: 10000
 client:
   secret: VzVltr0hCVE1y8Ag0XDM
   id: 7488964

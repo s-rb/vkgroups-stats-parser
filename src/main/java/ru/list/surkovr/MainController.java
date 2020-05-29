@@ -30,8 +30,6 @@ public class MainController {
     public String getGroupLikes(@RequestParam(value = "period", required = false) String period,
                                 @RequestParam(value = "code", required = true) String code, Model model,
                                 HttpServletResponse response) {
-
-
         period = "today";
         System.out.println("===> " + code);
         if (code == null || code.equals("")) {
