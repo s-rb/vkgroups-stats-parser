@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:${CLEARDB_DATABASE_URL:mysql://localhost:3306/vkstatsdb?useLegacyDatetimeCode=false}
+    useJDBCCompliantTimeZoneShift: true
+    serverTimezone: Asia/Tokyo
+    username: root
+    password: testtest
+  jpa:
+    show_sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Tokyo
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
+
+
+db:
+  update:
+    timeout: 3600000
+client:
+  secret: VzVltr0hCVE1y8Ag0XDM
+  id: 7488964
+server:
+  host: http://surkov-vkstats-app.herokuapp.com
+group:
+  ids: 1
+    2
+    3

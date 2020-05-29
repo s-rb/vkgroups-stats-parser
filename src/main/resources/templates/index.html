@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8"/>
+    <title>VK GROUP STATISTICS</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+<div class="container">
+    <h1 class="display-4" align="center">GROUP STATISTICS</h1>
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="thead-dark">
+        <tr>
+            <td>ID</td>
+            <td>NAME</td>
+            <td>ALL LIKES</td>
+            <td>ALL VIEWS</td>
+            <td>ALL COMMENTS</td>
+            <td>ALL MEMBERS</td>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="stat : ${stats}">
+            <td th:text="${stat.getGroupId()}"/>
+            <td th:text="${stat.getName()}"/>
+            <td th:text="${stat.getAllLikesCount()}"/>
+            <td th:text="${stat.getAllViewsCount()}"/>
+            <td th:text="${stat.getAllCommentsCount()}"/>
+            <td th:text="${stat.getAllMembersCount()}"/>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
