@@ -12,10 +12,17 @@
 
 <body>
 <div class="container">
-    <h1 class="display-4" align="center">GROUP STATISTICS <a class="btn btn-success" type="submit" href="/login">Login</a></h1>
+    <h1 class="display-4" align="center" th:text="GROUP STATISTICS ${period}">GROUP STATISTICS</h1>
+    <div class="container">
+        <a type="submit" class="btn btn-warning btn-lg col-2" href="/stats/today">Today</a>
+        <a type="submit" class="btn btn-warning btn-lg col-2" href="/stats/week">Week</a>
+        <a type="submit" class="btn btn-warning btn-lg col-2" href="/stats/month">Month</a>
+        <a type="submit" class="btn btn-warning btn-lg col-2" href="/stats/year">Year</a>
+        <a class="btn btn-success btn-lg col-2" type="submit" href="/login">Login</a>
+    </div>
     <table class="table table-striped table-bordered table-hover">
         <thead class="thead-dark">
-        <tr>
+        <tr align="center">
             <td>ID</td>
             <td>NAME</td>
             <td>ALL LIKES</td>
@@ -23,18 +30,16 @@
             <td>ALL COMMENTS</td>
             <td>ALL MEMBERS</td>
         </tr>
-        </thead>
-
-        <tbody>
-        <tr th:each="stat : ${stats}">
-            <td th:text="${stat.getGroupId()}"/>
-            <td th:text="${stat.getName()}"/>
-            <td th:text="${stat.getAllLikesCount()}"/>
-            <td th:text="${stat.getAllViewsCount()}"/>
-            <td th:text="${stat.getAllCommentsCount()}"/>
-            <td th:text="${stat.getAllMembersCount()}"/>
-        </tr>
-        </tbody>
+        </thead>        <tbody>
+    <tr th:each="stat : ${stats}" align="center">
+        <td th:text="${stat.getGroupId()}"/>
+        <td th:text="${stat.getName()}"/>
+        <td th:text="${stat.getAllLikesCount()}"/>
+        <td th:text="${stat.getAllViewsCount()}"/>
+        <td th:text="${stat.getAllCommentsCount()}"/>
+        <td th:text="${stat.getAllMembersCount()}"/>
+    </tr>
+    </tbody>
     </table>
 </div>
 </body>

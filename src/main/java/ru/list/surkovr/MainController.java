@@ -3,10 +3,7 @@ package ru.list.surkovr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -26,29 +23,21 @@ public class MainController {
     // Код получаем после авторизации. Если код отсутствует, то редирект на авторизацию
     // После авторизации, код запоминается в приложении и используется для автоматического обновления
     // При каждом запросе данных, код будет обновляться (если он есть в запросе)
-    @GetMapping(path = "/index")
-    public String getGroupLikes(@RequestParam(value = "period", required = false) String period,
-                                @RequestParam(value = "code", required = true) String code, Model model,
+    @GetMapping(path = "/stats/{period}")
+    public String getGroupLikes(@PathVariable("period") String period,
+                                @RequestParam(value = "code", required = false) String code, Model model,
                                 HttpServletResponse response) {
-        period = "today";
-        System.out.println("===> " + code);
-        if (code == null || code.equals("")) {
-            try {
-                response.sendRedirect(vkGroupService.getUserOAuthUrl());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
+        vkGroupService.setCode(code, response);
             List<GroupsStatsResultDTO> stats = null;
             try {
-                stats = Objects.requireNonNull(vkGroupService.getGroupStatByPeriod(period, code));
+                stats = Objects.requireNonNull(vkGroupService.getGroupStatByPeriod(period));
             } catch (NullPointerException e) {
                 e.printStackTrace();
+                return "redirect:/login";
             }
+            model.addAttribute("period", period.substring(0,1).toUpperCase() + period.substring(1));
             model.addAttribute("stats", stats);
             return "index";
-        }
-        return "redirect:/connect/vkontakte";
     }
 
     @GetMapping("/login")
@@ -57,7 +46,8 @@ public class MainController {
     }
 
     @RequestMapping("/")
-    public String index() {
-        return "index";
+    public void index(@RequestParam(value = "code", required = false) String code,
+                      HttpServletResponse response) throws IOException {
+        response.sendRedirect("/stats/today?code=" + code);
     }
 }

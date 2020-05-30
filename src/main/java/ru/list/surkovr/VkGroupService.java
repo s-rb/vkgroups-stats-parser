@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -76,14 +78,14 @@ public class VkGroupService {
                 GroupStats currentStats = calculateWallStat(userActor, group);
                 result.add(currentStats);
             }
-        } catch (ClientException | ApiException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return result;
     }
 
-    private GroupStats calculateWallStat(UserActor userActor, GroupFull group) throws ClientException, ApiException {
-        GetResponse stats = getResponse(userActor, group.getId(),null, null, null);
+    private GroupStats calculateWallStat(UserActor userActor, GroupFull group) throws Exception {
+        GetResponse stats = Objects.requireNonNull(getResponse(userActor, group.getId(),null, null, null));
         int postsCount = stats.getCount();
         int viewsCount = (int) stats.getItems().stream()
                 .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
@@ -139,8 +141,7 @@ public class VkGroupService {
         return host + "/group_callback?group_id=" + groupId;
     }
 
-    public List<GroupsStatsResultDTO> getGroupStatByPeriod(String period, String code) {
-        if (code != null && !code.equals("")) vk.setCode(code);
+    public List<GroupsStatsResultDTO> getGroupStatByPeriod(String period) {
         List<GroupStats> currentStatsList = new LinkedList<>();
         List<GroupStats> lastStatsList = new LinkedList<>();
         for (int i : vk.getGroupIds()) {
@@ -170,6 +171,18 @@ public class VkGroupService {
             }
         }
         return calculateStatsDifference(currentStatsList, lastStatsList, period);
+    }
+
+    public void setCode(String code, HttpServletResponse response) {
+        if (code == null || code.equals("")) {
+            try {
+                response.sendRedirect("/login");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            vk.setCode(code);
+        }
     }
 
     private List<GroupsStatsResultDTO> calculateStatsDifference(List<GroupStats> currentStatsList,
