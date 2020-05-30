@@ -180,16 +180,13 @@ public class VkGroupService {
         return calculateStatsDifference(currentStatsList, lastStatsList, period);
     }
 
-    public void setCode(String code, HttpServletResponse response) {
-        if (code == null || code.equals("")) {
-            try {
-                response.sendRedirect("/login");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
+    public boolean setCode(String code) {
+        if (code != null && !code.equals("")) {
             vk.setCode(code);
             isCodeValid.set(true);
+            return true;
+        } else {
+            return false;
         }
     }
 

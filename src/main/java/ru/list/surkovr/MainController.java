@@ -24,11 +24,13 @@ public class MainController {
     // После авторизации, код запоминается в приложении и используется для автоматического обновления
     // При каждом запросе данных, код будет обновляться (если он есть в запросе)
     @GetMapping(path = "/stats/{period}")
-    public String getGroupLikes(@PathVariable("period") String period,
+    public String getGroupStats(@PathVariable("period") String period,
                                 @RequestParam(value = "code", required = false) String code, Model model,
                                 HttpServletResponse response) throws IOException {
+
+
+        if (!vkGroupService.setCode(code)) return "redirect:/login";
         validateCode(response);
-        vkGroupService.setCode(code, response);
             List<GroupsStatsResultDTO> stats = null;
             try {
                 stats = Objects.requireNonNull(vkGroupService.getGroupStatByPeriod(period));
