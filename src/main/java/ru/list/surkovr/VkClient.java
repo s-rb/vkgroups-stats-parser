@@ -16,7 +16,6 @@ public class VkClient extends VkApiClient {
     @Value("${client.id}")
     private int clientId;
     private List<Integer> groupIds = List.of(185052202, 48512305, 188091270, 847771, 26284064, 193849773);
-    private String code;
     private String userId;
 
     public VkClient() {
@@ -91,14 +90,6 @@ public class VkClient extends VkApiClient {
 
     public void setGroupIds(List<Integer> groupIds) {
         this.groupIds = groupIds;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     public String getUserId() {

@@ -25,7 +25,7 @@ client:
   secret: VzVltr0hCVE1y8Ag0XDM
   id: 7488964
 server:
-  host: http://surkov-vkstats-app.herokuapp.com/index
+  host: http://surkov-vkstats-app.herokuapp.com/auth
 group:
   ids: 1
     2

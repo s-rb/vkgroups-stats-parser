@@ -3,7 +3,10 @@ package ru.list.surkovr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -20,26 +23,24 @@ public class MainController {
         this.vkGroupService = vkGroupService;
     }
 
-    // Код получаем после авторизации. Если код отсутствует, то редирект на авторизацию
-    // После авторизации, код запоминается в приложении и используется для автоматического обновления
-    // При каждом запросе данных, код будет обновляться (если он есть в запросе)
     @GetMapping(path = "/stats/{period}")
-    public String getGroupStats(@PathVariable("period") String period,
-                                @RequestParam(value = "code", required = false) String code, Model model,
-                                HttpServletResponse response) throws IOException {
-        System.out.println("====> Controller code:" + code);
-        if (!vkGroupService.setCode(code)) return "redirect:/login";
-        validateCode(response);
-            List<GroupsStatsResultDTO> stats = null;
+    public String getGroupStats(@PathVariable("period") String period, Model model) {
+        String res;
+        if (!vkGroupService.hasValidAccessToken()) {
+            res = vkGroupService.getUserOAuthUrl();
+        } else {
+            List<GroupsStatsResultDTO> stats;
             try {
                 stats = Objects.requireNonNull(vkGroupService.getGroupStatByPeriod(period));
             } catch (NullPointerException e) {
                 e.printStackTrace();
                 return "redirect:/login";
             }
-            model.addAttribute("period", period.substring(0,1).toUpperCase() + period.substring(1));
+            model.addAttribute("period", period.substring(0, 1).toUpperCase() + period.substring(1));
             model.addAttribute("stats", stats);
-            return "index";
+            res = "index";
+        }
+        return res;
     }
 
     @GetMapping("/login")
@@ -48,18 +49,12 @@ public class MainController {
     }
 
     @RequestMapping("/")
-    public void home(@RequestParam(value = "code", required = false) String code,
-                      HttpServletResponse response) throws IOException {
-        response.sendRedirect("/stats/today?code=" + code);
+    public void home(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/stats/today");
     }
 
-    @RequestMapping("/index")
-    public void index(@RequestParam(value = "code", required = false) String code,
-                      HttpServletResponse response) throws IOException {
-        response.sendRedirect("/stats/today?code=" + code);
-    }
-
-    private void validateCode(HttpServletResponse response) throws IOException {
-        if (!vkGroupService.hasValidCode()) response.sendRedirect(vkGroupService.getUserOAuthUrl());
+    @RequestMapping("/auth")
+    public String index(@RequestParam(value = "code") String code) {
+        return vkGroupService.authUser(code);
     }
 }

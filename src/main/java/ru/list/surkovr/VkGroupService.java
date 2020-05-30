@@ -2,8 +2,8 @@ package ru.list.surkovr;
 
 import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ApiUserDeletedException;
 import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.exceptions.OAuthException;
 import com.vk.api.sdk.objects.UserAuthResponse;
 import com.vk.api.sdk.objects.enums.WallFilter;
 import com.vk.api.sdk.objects.groups.Fields;
@@ -29,9 +29,10 @@ public class VkGroupService {
     @Value("${db.update.timeout}")
     public int updateTimeout;
     private final VkClient vk;
-    private String host;
-    private GroupStatsRepository groupStatsRepository;
-    private AtomicBoolean isCodeValid = new AtomicBoolean(false);
+    private final String host;
+    private final GroupStatsRepository groupStatsRepository;
+    private final AtomicBoolean isAutorized = new AtomicBoolean(false);
+    private UserActor actor;
 
     @Autowired
     public VkGroupService(VkClient vk, GroupStatsRepository groupStatsRepository) {
@@ -44,7 +45,7 @@ public class VkGroupService {
     public void start() {
         Thread dbUpdater = new Thread(() -> {
             while (true) {
-                if (isCodeValid.get()) {
+                if (isAutorized.get()) {
                     try {
                         Thread.sleep(TIMEOUT_BEFORE_START_DB_UPDATE);
                         try {
@@ -54,8 +55,7 @@ public class VkGroupService {
                         }
                         Thread.sleep(updateTimeout);
                     } catch (InterruptedException e) {
-                        vk.setCode("");
-                        isCodeValid.set(false);
+                        isAutorized.set(false);
                         e.printStackTrace();
                     }
                 }
@@ -65,42 +65,47 @@ public class VkGroupService {
         dbUpdater.start();
     }
 
+    public String authUser(String code) {
+        actor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
+        String res;
+        if (actor != null) {
+            res = "stats/today";
+            isAutorized.set(true);
+        } else {
+            res = getUserOAuthUrl();
+        }
+        return res;
+    }
+
     public void loadStatsToDb() throws NoSuchElementException {
         List<GroupStats> statsList = Optional.ofNullable(getWallStatFromVk()).orElseThrow();
         if (statsList.isEmpty()) {
-            isCodeValid.set(false);
-            vk.setCode("");
+            isAutorized.set(false);
         }
         statsList.forEach(g -> groupStatsRepository.save(g));
     }
 
     public List<GroupStats> getWallStatFromVk() {
-        String code = vk.getCode();
-        if (code == null || code.equals("")) return null;
         List<GroupStats> result = null;
         try {
-            UserActor userActor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
-            System.out.println("===> getWallStatFromVk " + code);
             result = new LinkedList<>();
-            List<GroupFull> groupsData = vk.groups().getById(userActor)
+            List<GroupFull> groupsData = vk.groups().getById(actor)
                     .groupIds(vk.getGroupIds().stream().map(String::valueOf)
                             .collect(Collectors.toList())).fields(Fields.MEMBERS_COUNT).execute();
             for (GroupFull group : groupsData) {
-                userActor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
-                GroupStats currentStats = calculateWallStat(userActor, group);
+                GroupStats currentStats = calculateWallStat(group);
                 result.add(currentStats);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            vk.setCode("");
-            isCodeValid.set(false);
+            isAutorized.set(false);
         }
         return result;
     }
 
-    private GroupStats calculateWallStat(UserActor userActor, GroupFull group) throws Exception {
+    private GroupStats calculateWallStat(GroupFull group) throws Exception {
         GetResponse stats = Objects.requireNonNull(getStatsResponseFromVk(
-                userActor, group.getId(), null, null, null));
+                group.getId(), null, null, null));
         int postsCount = stats.getCount();
         int viewsCount = (int) stats.getItems().stream()
                 .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
@@ -112,7 +117,7 @@ public class VkGroupService {
         int tempCount = stats.getItems().size();
         int offset = 1;
         while (tempCount < postsCount) {
-            GetResponse newStats = getStatsResponseFromVk(userActor, group.getId(), offset++, null, null);
+            GetResponse newStats = getStatsResponseFromVk(group.getId(), offset++, null, null);
             viewsCount += (int) newStats.getItems().stream()
                     .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
             likesCount += (int) newStats.getItems().stream()
@@ -125,15 +130,15 @@ public class VkGroupService {
                 likesCount, viewsCount, group.getMembersCount(), commentsCount);
     }
 
-    private GetResponse getStatsResponseFromVk(UserActor userActor, int owner_id, Integer offset,
+    private GetResponse getStatsResponseFromVk(int owner_id, Integer offset,
                                                Integer maxPostsCount, WallFilter wallFilter)
             throws ClientException, ApiException {
         try {
-            Thread.sleep(100);
+            Thread.sleep(50);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return vk.wall().get(userActor).ownerId(owner_id)
+        return vk.wall().get(actor).ownerId(owner_id)
                 .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
                 .filter(Objects.requireNonNullElse(wallFilter, WallFilter.ALL))
@@ -141,9 +146,18 @@ public class VkGroupService {
     }
 
     private UserActor getUserAccessToken(int clientId, String clientSecret,
-                                         String code) throws ClientException, ApiException {
-        UserAuthResponse userAuthResponse = vk.oAuth().userAuthorizationCodeFlow(
-                clientId, clientSecret, getUserRedirectUri(), code).execute();
+                                         String code)  {
+        UserAuthResponse userAuthResponse;
+        try {
+            userAuthResponse = vk.oAuth().userAuthorizationCodeFlow(
+                    clientId, clientSecret, getUserRedirectUri(), code).execute();
+        } catch (OAuthException e) {
+            e.getRedirectUri();
+            return null;
+        } catch (ApiException | ClientException e) {
+            e.printStackTrace();
+            return null;
+        }
         return new UserActor(userAuthResponse.getUserId(), userAuthResponse.getAccessToken());
     }
 
@@ -194,17 +208,6 @@ public class VkGroupService {
         return calculateStatsDifference(currentStatsList, lastStatsList, period);
     }
 
-    public boolean setCode(String code) {
-        if (code != null && !code.equals("")) {
-            System.out.println("====> VkService code:" + code);
-            vk.setCode(code);
-            isCodeValid.set(true);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private List<GroupsStatsResultDTO> calculateStatsDifference(List<GroupStats> currentStatsList,
                                                                 List<GroupStats> lastStatsList,
                                                                 String period) {
@@ -240,8 +243,8 @@ public class VkGroupService {
                 + "&display=page&redirect_uri=" + getUserRedirectUri() + "&scope=groups&response_type=code";
     }
 
-    public boolean hasValidCode() {
-        return isCodeValid.get();
+    public boolean hasValidAccessToken() {
+        return isAutorized.get();
     }
 
 //    private String getGroupOAuthUrl(int groupId) {
