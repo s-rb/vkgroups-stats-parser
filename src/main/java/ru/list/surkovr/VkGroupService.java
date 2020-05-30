@@ -141,10 +141,10 @@ public class VkGroupService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("===> getStatsResponseFromVk userId" + actor.getId() + " token " + actor.getAccessToken());
-        return vk.wall().get(actor).ownerId(owner_id)
-                .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
+        System.out.println("===> getStatsResponseFromVk userId " + actor.getId() + " token " + actor.getAccessToken());
+        return vk.wall().get(actor).ownerId(-1 * owner_id)
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
+                .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .filter(Objects.requireNonNullElse(wallFilter, WallFilter.ALL))
                 .extended(false).fields().execute();
     }
