@@ -111,23 +111,25 @@ public class VkGroupService {
         GetResponse stats = Objects.requireNonNull(getStatsResponseFromVk(
                 group.getId(), null, null, null));
         int postsCount = stats.getCount();
-        int viewsCount = (int) stats.getItems().stream()
-                .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
-        int likesCount = (int) stats.getItems().stream()
-                .collect(Collectors.summarizingInt(s -> s.getLikes().getCount())).getSum();
-        int commentsCount = (int) stats.getItems().stream()
-                .collect(Collectors.summarizingInt(s -> s.getComments().getCount())).getSum();
-
+        int viewsCount = stats.getItems().stream().map(
+                s -> s.getViews().getCount()).reduce(Integer::sum).orElse(0);
+//                        summarizingInt(s -> s.getViews().getCount())).getSum();
+        int likesCount = stats.getItems().stream().map(
+                s -> s.getLikes().getCount()).reduce(Integer::sum).orElse(0);
+//                (int) stats.getItems().stream()
+//                .collect(Collectors.summarizingInt(s -> s.getLikes().getCount())).getSum();
+        int commentsCount = stats.getItems().stream().map(
+                s -> s.getComments().getCount()).reduce(Integer::sum).orElse(0);
         int tempCount = stats.getItems().size();
         int offset = 1;
         while (tempCount < postsCount) {
             GetResponse newStats = getStatsResponseFromVk(group.getId(), offset++, null, null);
-            viewsCount += (int) newStats.getItems().stream()
-                    .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
-            likesCount += (int) newStats.getItems().stream()
-                    .collect(Collectors.summarizingInt(s -> s.getLikes().getCount())).getSum();
-            commentsCount += (int) newStats.getItems().stream()
-                    .collect(Collectors.summarizingInt(s -> s.getComments().getCount())).getSum();
+            viewsCount += newStats.getItems().stream().map(
+                    s -> s.getViews().getCount()).reduce(Integer::sum).orElse(0);
+            likesCount += newStats.getItems().stream().map(
+                    s -> s.getLikes().getCount()).reduce(Integer::sum).orElse(0);
+            commentsCount += newStats.getItems().stream().map(
+                    s -> s.getComments().getCount()).reduce(Integer::sum).orElse(0);
             tempCount += newStats.getItems().size();
         }
         return new GroupStats(group.getId(), group.getName(), postsCount,
