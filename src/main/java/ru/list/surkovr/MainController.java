@@ -27,7 +27,7 @@ public class MainController {
     public String getGroupStats(@PathVariable("period") String period, Model model) {
         String res;
         if (!vkGroupService.hasValidAccessToken()) {
-            res = vkGroupService.getUserOAuthUrl();
+            return "redirect:/login";
         } else {
             List<GroupsStatsResultDTO> stats;
             try {

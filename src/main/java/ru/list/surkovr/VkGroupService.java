@@ -72,7 +72,7 @@ public class VkGroupService {
             res = "stats/today";
             isAutorized.set(true);
         } else {
-            res = getUserOAuthUrl();
+            res = "redirect:/login";
         }
         return res;
     }
