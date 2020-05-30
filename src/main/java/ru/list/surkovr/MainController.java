@@ -46,6 +46,12 @@ public class MainController {
     }
 
     @RequestMapping("/")
+    public void home(@RequestParam(value = "code", required = false) String code,
+                      HttpServletResponse response) throws IOException {
+        response.sendRedirect("/stats/today?code=" + code);
+    }
+
+    @RequestMapping("/index")
     public void index(@RequestParam(value = "code", required = false) String code,
                       HttpServletResponse response) throws IOException {
         response.sendRedirect("/stats/today?code=" + code);
