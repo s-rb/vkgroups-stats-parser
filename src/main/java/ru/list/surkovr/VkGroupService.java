@@ -14,9 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -82,13 +79,14 @@ public class VkGroupService {
         if (code == null || code.equals("")) return null;
         List<GroupStats> result = null;
         try {
-            System.out.println("===> getWallStatFromVk " + code);
             UserActor userActor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
+            System.out.println("===> getWallStatFromVk " + code);
             result = new LinkedList<>();
             List<GroupFull> groupsData = vk.groups().getById(userActor)
                     .groupIds(vk.getGroupIds().stream().map(String::valueOf)
                             .collect(Collectors.toList())).fields(Fields.MEMBERS_COUNT).execute();
             for (GroupFull group : groupsData) {
+                userActor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
                 GroupStats currentStats = calculateWallStat(userActor, group);
                 result.add(currentStats);
             }
@@ -130,6 +128,7 @@ public class VkGroupService {
     private GetResponse getStatsResponseFromVk(UserActor userActor, int owner_id, Integer offset,
                                                Integer maxPostsCount, WallFilter wallFilter)
             throws ClientException, ApiException {
+        Thread.sleep(100);
         return vk.wall().get(userActor).ownerId(owner_id)
                 .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
