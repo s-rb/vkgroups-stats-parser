@@ -69,7 +69,7 @@ public class VkGroupService {
         actor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
         String res;
         if (actor != null) {
-            res = "stats/today";
+            res = "redirect:/stats/today";
             isAutorized.set(true);
         } else {
             res = "redirect:/login";
