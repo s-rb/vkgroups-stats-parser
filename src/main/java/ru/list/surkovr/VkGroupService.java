@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +32,7 @@ public class VkGroupService {
     private final VkClient vk;
     private String host;
     private GroupStatsRepository groupStatsRepository;
+    private AtomicBoolean isCodeValid = new AtomicBoolean(false);
 
     @Autowired
     public VkGroupService(VkClient vk, GroupStatsRepository groupStatsRepository) {
@@ -43,6 +45,7 @@ public class VkGroupService {
     public void start() {
         Thread dbUpdater = new Thread(() -> {
             while (true) {
+                if (isCodeValid.get()) {
                 try {
                     Thread.sleep(TIMEOUT_BEFORE_START_DB_UPDATE);
                     try {
@@ -52,8 +55,9 @@ public class VkGroupService {
                     }
                     Thread.sleep(updateTimeout);
                 } catch (InterruptedException e) {
+                    isCodeValid.set(false);
                     e.printStackTrace();
-                }
+                } }
             }
         });
         dbUpdater.setDaemon(true);
@@ -61,11 +65,12 @@ public class VkGroupService {
     }
 
     public void loadStatsToDb() throws NoSuchElementException {
-        List<GroupStats> statsList = Optional.ofNullable(getWallStat()).orElseThrow();
+        List<GroupStats> statsList = Optional.ofNullable(getWallStatFromVk()).orElseThrow();
+        if (statsList.isEmpty()) isCodeValid.set(false);
         statsList.forEach(g -> groupStatsRepository.save(g));
     }
 
-    public List<GroupStats> getWallStat() {
+    public List<GroupStats> getWallStatFromVk() {
         if (vk.getCode() == null || vk.getCode().equals("")) return null;
         List<GroupStats> result = null;
         try {
@@ -80,12 +85,14 @@ public class VkGroupService {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            isCodeValid.set(false);
         }
         return result;
     }
 
     private GroupStats calculateWallStat(UserActor userActor, GroupFull group) throws Exception {
-        GetResponse stats = Objects.requireNonNull(getResponse(userActor, group.getId(),null, null, null));
+        GetResponse stats = Objects.requireNonNull(getStatsResponseFromVk(
+                userActor, group.getId(),null, null, null));
         int postsCount = stats.getCount();
         int viewsCount = (int) stats.getItems().stream()
                 .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
@@ -97,7 +104,7 @@ public class VkGroupService {
         int tempCount = stats.getItems().size();
         int offset = 1;
         while (tempCount < postsCount) {
-            GetResponse newStats = getResponse(userActor, group.getId(), offset++, null, null);
+            GetResponse newStats = getStatsResponseFromVk(userActor, group.getId(), offset++, null, null);
             viewsCount += (int) newStats.getItems().stream()
                     .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
             likesCount += (int) newStats.getItems().stream()
@@ -110,8 +117,8 @@ public class VkGroupService {
                 likesCount, viewsCount, group.getMembersCount(), commentsCount);
     }
 
-    private GetResponse getResponse(UserActor userActor, int owner_id, Integer offset,
-                                    Integer maxPostsCount, WallFilter wallFilter) throws ClientException, ApiException {
+    private GetResponse getStatsResponseFromVk(UserActor userActor, int owner_id, Integer offset,
+                                               Integer maxPostsCount, WallFilter wallFilter) throws ClientException, ApiException {
         return vk.wall().get(userActor).ownerId(owner_id)
                 .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
@@ -182,6 +189,7 @@ public class VkGroupService {
             }
         } else {
             vk.setCode(code);
+            isCodeValid.set(true);
         }
     }
 
@@ -218,6 +226,10 @@ public class VkGroupService {
     public String getUserOAuthUrl() {
         return "https://oauth.vk.com/authorize?client_id=" + vk.getClientId()
                 + "&display=page&redirect_uri=" + getUserRedirectUri() + "&scope=groups&response_type=code";
+    }
+
+    public boolean hasValidCode() {
+        return isCodeValid.get();
     }
 
 //    private String getGroupOAuthUrl(int groupId) {

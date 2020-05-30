@@ -26,7 +26,8 @@ public class MainController {
     @GetMapping(path = "/stats/{period}")
     public String getGroupLikes(@PathVariable("period") String period,
                                 @RequestParam(value = "code", required = false) String code, Model model,
-                                HttpServletResponse response) {
+                                HttpServletResponse response) throws IOException {
+        validateCode(response);
         vkGroupService.setCode(code, response);
             List<GroupsStatsResultDTO> stats = null;
             try {
@@ -55,5 +56,9 @@ public class MainController {
     public void index(@RequestParam(value = "code", required = false) String code,
                       HttpServletResponse response) throws IOException {
         response.sendRedirect("/stats/today?code=" + code);
+    }
+
+    private void validateCode(HttpServletResponse response) throws IOException {
+        if (!vkGroupService.hasValidCode()) response.sendRedirect(vkGroupService.getUserOAuthUrl());
     }
 }
