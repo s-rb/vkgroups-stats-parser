@@ -1,4 +1,4 @@
-package ru.list.surkovr;
+package ru.list.surkovr.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.list.surkovr.model.GroupsStatsResult;
+import ru.list.surkovr.service.VkGroupService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -29,7 +31,7 @@ public class MainController {
         if (!vkGroupService.hasValidAccessToken()) {
             return "redirect:/login";
         } else {
-            List<GroupsStatsResultDTO> stats;
+            List<GroupsStatsResult> stats;
             try {
                 stats = Objects.requireNonNull(vkGroupService.getGroupStatByPeriod(period));
             } catch (NullPointerException e) {
@@ -54,7 +56,7 @@ public class MainController {
     }
 
     @RequestMapping("/auth")
-    public String index(@RequestParam(value = "code") String code) {
+    public String auth(@RequestParam(value = "code") String code) {
         System.out.println("===> index " + code);
         return vkGroupService.authUser(code);
     }

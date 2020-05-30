@@ -17,15 +17,16 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
 
-db:
-  update:
-    timeout: 1000000
 client:
-  secret: VzVltr0hCVE1y8Ag0XDM
-  id: 7488964
+  secret: # secret_code_from_vk_for_app
+  id: # app_id_from_vk
 server:
-  host: http://surkov-vkstats-app.herokuapp.com/auth
-group:
-  ids: 1
-    2
-    3
+  host: # host_for_the_app (same host as redirect_url must be set at the VK app settings)
+timeout:
+  before_start_db_update: 5000
+  db_update: 1000000
+  to_get_data_from_vk_ms: 250
+  clear_db_ms: 100
+default:
+  max_posts_count: 20
+  offset: 0

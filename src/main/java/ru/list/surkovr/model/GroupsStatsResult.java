@@ -1,11 +1,11 @@
-package ru.list.surkovr;
+package ru.list.surkovr.model;
 
-public class GroupsStatsResultDTO extends GroupStats {
+public class GroupsStatsResult extends GroupStats {
 
     private String period;
 
-    public GroupsStatsResultDTO(int groupId, String name, int allPostsCount, int allLikesCount,
-                                int allViewsCount, int allMembersCount, String period, int allCommentsCount) {
+    public GroupsStatsResult(int groupId, String name, int allPostsCount, int allLikesCount,
+                             int allViewsCount, int allMembersCount, String period, int allCommentsCount) {
         super(groupId, name, allPostsCount, allLikesCount, allViewsCount, allMembersCount, allCommentsCount);
         this.period = period;
     }

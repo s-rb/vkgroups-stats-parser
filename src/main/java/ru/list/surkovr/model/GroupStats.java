@@ -1,4 +1,4 @@
-package ru.list.surkovr;
+package ru.list.surkovr.model;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -15,10 +15,15 @@ public class GroupStats implements Serializable {
     private int groupId;
     @Column(unique = true)
     private String name;
+    @Column(name = "all_posts_count")
     private int allPostsCount;
+    @Column(name = "all_likes_count")
     private int allLikesCount;
+    @Column(name = "all_views_count")
     private int allViewsCount;
+    @Column(name = "all_members_count")
     private int allMembersCount;
+    @Column(name = "all_comments_count")
     private int allCommentsCount;
     @Column(name = "updated_time")
     private LocalDateTime updatedTime;
@@ -100,5 +105,13 @@ public class GroupStats implements Serializable {
 
     public void setAllCommentsCount(int allCommentsCount) {
         this.allCommentsCount = allCommentsCount;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }
