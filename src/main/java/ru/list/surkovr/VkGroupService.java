@@ -2,6 +2,7 @@ package ru.list.surkovr;
 
 import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ApiUserDeletedException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.UserAuthResponse;
 import com.vk.api.sdk.objects.enums.WallFilter;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -46,18 +48,20 @@ public class VkGroupService {
         Thread dbUpdater = new Thread(() -> {
             while (true) {
                 if (isCodeValid.get()) {
-                try {
-                    Thread.sleep(TIMEOUT_BEFORE_START_DB_UPDATE);
                     try {
-                        loadStatsToDb();
-                    } catch (NoSuchElementException e) {
+                        Thread.sleep(TIMEOUT_BEFORE_START_DB_UPDATE);
+                        try {
+                            loadStatsToDb();
+                        } catch (NoSuchElementException e) {
+                            e.printStackTrace();
+                        }
+                        Thread.sleep(updateTimeout);
+                    } catch (InterruptedException e) {
+                        vk.setCode("");
+                        isCodeValid.set(false);
                         e.printStackTrace();
                     }
-                    Thread.sleep(updateTimeout);
-                } catch (InterruptedException e) {
-                    isCodeValid.set(false);
-                    e.printStackTrace();
-                } }
+                }
             }
         });
         dbUpdater.setDaemon(true);
@@ -66,15 +70,20 @@ public class VkGroupService {
 
     public void loadStatsToDb() throws NoSuchElementException {
         List<GroupStats> statsList = Optional.ofNullable(getWallStatFromVk()).orElseThrow();
-        if (statsList.isEmpty()) isCodeValid.set(false);
+        if (statsList.isEmpty()) {
+            isCodeValid.set(false);
+            vk.setCode("");
+        }
         statsList.forEach(g -> groupStatsRepository.save(g));
     }
 
     public List<GroupStats> getWallStatFromVk() {
-        if (vk.getCode() == null || vk.getCode().equals("")) return null;
+        String code = vk.getCode();
+        if (code == null || code.equals("")) return null;
         List<GroupStats> result = null;
         try {
-            UserActor userActor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), vk.getCode());
+            System.out.println("===> getWallStatFromVk " + code);
+            UserActor userActor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
             result = new LinkedList<>();
             List<GroupFull> groupsData = vk.groups().getById(userActor)
                     .groupIds(vk.getGroupIds().stream().map(String::valueOf)
@@ -85,6 +94,7 @@ public class VkGroupService {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            vk.setCode("");
             isCodeValid.set(false);
         }
         return result;
@@ -92,7 +102,7 @@ public class VkGroupService {
 
     private GroupStats calculateWallStat(UserActor userActor, GroupFull group) throws Exception {
         GetResponse stats = Objects.requireNonNull(getStatsResponseFromVk(
-                userActor, group.getId(),null, null, null));
+                userActor, group.getId(), null, null, null));
         int postsCount = stats.getCount();
         int viewsCount = (int) stats.getItems().stream()
                 .collect(Collectors.summarizingInt(s -> s.getViews().getCount())).getSum();
@@ -118,7 +128,8 @@ public class VkGroupService {
     }
 
     private GetResponse getStatsResponseFromVk(UserActor userActor, int owner_id, Integer offset,
-                                               Integer maxPostsCount, WallFilter wallFilter) throws ClientException, ApiException {
+                                               Integer maxPostsCount, WallFilter wallFilter)
+            throws ClientException, ApiException {
         return vk.wall().get(userActor).ownerId(owner_id)
                 .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
@@ -182,6 +193,7 @@ public class VkGroupService {
 
     public boolean setCode(String code) {
         if (code != null && !code.equals("")) {
+            System.out.println("====> VkService code:" + code);
             vk.setCode(code);
             isCodeValid.set(true);
             return true;

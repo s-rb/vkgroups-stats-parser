@@ -27,8 +27,7 @@ public class MainController {
     public String getGroupStats(@PathVariable("period") String period,
                                 @RequestParam(value = "code", required = false) String code, Model model,
                                 HttpServletResponse response) throws IOException {
-
-
+        System.out.println("====> Controller code:" + code);
         if (!vkGroupService.setCode(code)) return "redirect:/login";
         validateCode(response);
             List<GroupsStatsResultDTO> stats = null;
