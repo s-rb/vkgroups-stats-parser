@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class VkGroupService {
 
     public static final int TIMEOUT_BEFORE_START_DB_UPDATE = 5000;
+    public static final int TIMEOUT_TO_GET_FROM_VK_MS = 150;
     public int DEFAULT_MAX_POSTS_COUNT = 20;
     public int DEFAULT_OFFSET = 0;
     @Value("${db.update.timeout}")
@@ -135,7 +136,7 @@ public class VkGroupService {
 
     private GetResponse getStatsResponseFromVk(int owner_id, Integer offset,
                                                Integer maxPostsCount, WallFilter wallFilter) throws Exception {
-        Thread.sleep(50);
+        Thread.sleep(TIMEOUT_TO_GET_FROM_VK_MS);
         System.out.println("===> getStatsResponseFromVk userId " + actor.getId() + " token " + actor.getAccessToken());
         return vk.wall().get(actor).ownerId(-1 * owner_id)
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
