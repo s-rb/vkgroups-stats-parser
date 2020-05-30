@@ -17,10 +17,9 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
 
-
 db:
   update:
-    timeout: 10000
+    timeout: 1000000
 client:
   secret: VzVltr0hCVE1y8Ag0XDM
   id: 7488964

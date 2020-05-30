@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class VkGroupService {
 
     public static final int TIMEOUT_BEFORE_START_DB_UPDATE = 5000;
-    public static final int TIMEOUT_TO_GET_FROM_VK_MS = 150;
+    public static final int TIMEOUT_TO_GET_FROM_VK_MS = 250;
     public int DEFAULT_MAX_POSTS_COUNT = 20;
     public int DEFAULT_OFFSET = 0;
     @Value("${db.update.timeout}")
