@@ -55,6 +55,7 @@ public class MainController {
 
     @RequestMapping("/auth")
     public String index(@RequestParam(value = "code") String code) {
+        System.out.println("===> index " + code);
         return vkGroupService.authUser(code);
     }
 }

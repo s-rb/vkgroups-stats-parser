@@ -67,9 +67,11 @@ public class VkGroupService {
     }
 
     public String authUser(String code) {
+        System.out.println("===> authUser " + code);
         actor = getUserAccessToken(vk.getClientId(), vk.getClientSecret(), code);
         String res;
         if (actor != null) {
+            System.out.println("===> authUser, actor: " + actor.getAccessToken() + " " + actor.getId());
             res = "redirect:/stats/today";
             isAutorized.set(true);
         } else {
@@ -149,6 +151,7 @@ public class VkGroupService {
 
     private UserActor getUserAccessToken(int clientId, String clientSecret,
                                          String code)  {
+        System.out.println("===> getUserAccessToken" + clientId + " " + clientSecret + " " + code);
         UserAuthResponse userAuthResponse;
         try {
             userAuthResponse = vk.oAuth().userAuthorizationCodeFlow(
@@ -242,7 +245,7 @@ public class VkGroupService {
 
     public String getUserOAuthUrl() {
         return "https://oauth.vk.com/authorize?client_id=" + vk.getClientId()
-                + "&display=page&redirect_uri=" + getUserRedirectUri() + "&scope=groups&response_type=code";
+                + "&display=page&redirect_uri=" + getUserRedirectUri() + "&scope=stats&response_type=code";
     }
 
     public boolean hasValidAccessToken() {
