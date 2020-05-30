@@ -128,7 +128,11 @@ public class VkGroupService {
     private GetResponse getStatsResponseFromVk(UserActor userActor, int owner_id, Integer offset,
                                                Integer maxPostsCount, WallFilter wallFilter)
             throws ClientException, ApiException {
-        Thread.sleep(100);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return vk.wall().get(userActor).ownerId(owner_id)
                 .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
