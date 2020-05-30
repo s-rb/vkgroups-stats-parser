@@ -15,7 +15,7 @@ public class VkClient extends VkApiClient {
     private String host;
     @Value("${client.id}")
     private int clientId;
-    private List<Integer> groupIds = List.of(185052202, 48512305, 188091270, 847771, 26284064, 193849773);
+    private List<Integer> groupIds = List.of(88732008, 147604036, 158658142, 136695018, 1311599, 56631972);
     private String userId;
 
     public VkClient() {
