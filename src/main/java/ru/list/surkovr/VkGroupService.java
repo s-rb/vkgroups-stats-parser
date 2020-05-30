@@ -2,6 +2,7 @@ package ru.list.surkovr;
 
 import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ApiUserDeletedException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.exceptions.OAuthException;
 import com.vk.api.sdk.objects.UserAuthResponse;
@@ -82,7 +83,7 @@ public class VkGroupService {
         if (statsList.isEmpty()) {
             isAutorized.set(false);
         }
-        statsList.forEach(g -> groupStatsRepository.save(g));
+        statsList.forEach(groupStatsRepository::save);
     }
 
     public List<GroupStats> getWallStatFromVk() {
@@ -138,6 +139,7 @@ public class VkGroupService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        System.out.println("===> getStatsResponseFromVk userId" + actor.getId() + " token " + actor.getAccessToken());
         return vk.wall().get(actor).ownerId(owner_id)
                 .offset(Objects.requireNonNullElse(offset, DEFAULT_OFFSET))
                 .count(Objects.requireNonNullElse(maxPostsCount, DEFAULT_MAX_POSTS_COUNT))
