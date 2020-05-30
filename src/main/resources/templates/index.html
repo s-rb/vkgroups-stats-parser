@@ -12,7 +12,7 @@
 
 <body>
 <div class="container">
-    <h1 class="display-4" align="center" th:text="GROUP STATISTICS ${period}">GROUP STATISTICS</h1>
+    <h1 class="display-4" align="center">GROUP STATISTICS <a th:text="${period}"/></h1>
     <div class="container">
         <a type="submit" class="btn btn-warning btn-lg col-2" href="/stats/today">Today</a>
         <a type="submit" class="btn btn-warning btn-lg col-2" href="/stats/week">Week</a>
